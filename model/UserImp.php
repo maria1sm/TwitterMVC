@@ -41,7 +41,7 @@ function selectUserById($pdo, $id){
 function setUserTweets($pdo, User $user) {
     try {
         $id = $user->getId();
-        $sql = "SELECT * FROM publications WHERE userId = ? order By Id";
+        $sql = "SELECT * FROM publications WHERE userId = ? order By  Id DESC";
         $stmt= $pdo->prepare($sql);
         $stmt->execute([$id]);
         $user->setTweets([]);

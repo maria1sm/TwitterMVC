@@ -5,12 +5,10 @@ session_start();
 if(!isset($_SESSION["usuario"])){
     header("Location: LoginFormController.php");
 }
-$userToUnFollowId=$_GET["id"];
+$profileUser=selectUserById($pdo,$_GET["id"]);
 $userLogged= $_SESSION['usuario'];
+//$query = follow($pdo, $userToFollowId);
 
-$query = unfollow($pdo, $userToUnFollowId);
-$pdo = null;
-if($query){
-    Header("Location: ProfileController.php?id=$userToUnFollowId");
-}
+include_once("../view/followersTab.php");
+$pdo=null;
 ?>

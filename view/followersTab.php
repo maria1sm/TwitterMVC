@@ -1,46 +1,7 @@
-<?php 
-session_start();
+<?php
 if(!isset($_SESSION["usuario"])){
     header("Location: ../controller/LoginFormController.php");
 }
-?>
-<?php
-
-$userID = $_GET['id'];
-$userLogged = $_SESSION['usuario']['id'];
-
-$sql = "SELECT * FROM users WHERE id = '$userID'";
-$res = mysqli_query($connection, $sql);
-$userInfo = mysqli_fetch_assoc($res);
-//tweets
-$sql2 = "SELECT pub.id as pubId, userId, text, pub.createDate as pubDate, username, description, us.createDate as userDate
-        FROM publications as pub
-        JOIN users as us
-        ON pub.userId = us.id
-        WHERE userId = '$userID'
-        ORDER BY pub.id DESC";
-$res2 = mysqli_query($connection, $sql2);
-$sql3 = "SELECT fol.users_Id as seguidor, username, description
-        FROM follows as fol
-        JOIN users as us
-        ON us.id = fol.users_Id
-        WHERE fol.userToFollowId = $userID";
-$seguidores = mysqli_query($connection, $sql3);
-$sql4 = "SELECT fol.userToFollowId as siguiendo, username, description
-        FROM follows as fol
-        JOIN users as us
-        ON us.id = fol.userToFollowId
-        WHERE users_Id = $userID";
-$siguiendo = mysqli_query($connection, $sql4);
-/*$sql4 = "SELECT *
-        FROM follows as fol
-        JOIN users as us
-        ON us.id = fol.users_Id
-        WHERE users_id = $userLogged
-        AND userToFollowId = $userID";
-$siguiendo = mysqli_query($connection, $sql4);*/
-       
-
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -63,34 +24,38 @@ $siguiendo = mysqli_query($connection, $sql4);*/
         <!-- Body/Tweets -->    
     <section class="section-main container p-0">
         <div id="profile-header" class="px-2 d-flex align-items-center sticky-top">
-                <a href="../controller/ProfileController.php?id=<?=$userID?>" class="bg-transparent btn-plus" style="font-weight: bold;">
+                <a href="../controller/ProfileController.php?id=<?=$profileUser->getId()?>" class="bg-transparent btn-plus" style="font-weight: bold;">
                     <div class="arrow-bg">
                         <svg viewBox="0 0 24 24" class="arrow"><g><path d="M7.414 13l5.043 5.04-1.414 1.42L3.586 12l7.457-7.46 1.414 1.42L7.414 11H21v2H7.414z"></path></g></svg>
                     </div>
                 </a>
                 <div class="d-flex flex-column justify-content-center ms-4">
-                    <p class="fw-bold m-0 pb-2"><?= $userInfo['username']?></p>
+                    <p class="fw-bold m-0 pb-2"><?= $profileUser->getUsername()?></p>
                 </div>
             </div>
 <!--Nav pills-->
             <ul class="nav nav-pills mb-3 d-flex justify-content-around" id="pills-tab" role="tablist">
                 <li class="nav-item" role="presentation">
-                    <button class="nav-link active" id="pills-home-tab" data-bs-toggle="pill" data-bs-target="#pills-seguidores" type="button" role="tab" aria-controls="pills-seguidores" aria-selected="true"><p class="pb-2 m-0 fw-bold">Seguidores</p><div></div></button>
+                    <button class="nav-link active" id="pills-seguidores-tab" data-bs-toggle="pill" data-bs-target="#pills-seguidores" type="button" role="tab" aria-controls="pills-seguidores" aria-selected="true"><p class="pb-2 m-0 fw-bold">Seguidores</p><div></div></button>
                 </li>
                 <li class="nav-item" role="presentation">
-                    <button class="nav-link" id="pills-profile-tab" data-bs-toggle="pill" data-bs-target="#pills-siguiendo" type="button" role="tab" aria-controls="pills-siguiendo" aria-selected="false"><p class="pb-2 m-0 fw-bold">Siguiendo</p><div></div></button>
+                    <button class="nav-link" id="pills-siguiendo-tab" data-bs-toggle="pill" data-bs-target="#pills-siguiendo" type="button" role="tab" aria-controls="pills-siguiendo" aria-selected="false"><p class="pb-2 m-0 fw-bold">Siguiendo</p><div></div></button>
                 </li>
             </ul>
+            <hr class="m-0">
 <!--Nav content-->
             <div class="tab-content d-flex justify-content-center align-items-center w-100" id="pills-tabContent">
-                <div class="tab-pane fade show active d-flex flex-column align-items-center h-100 w-100" id="pills-seguidores" role="tabpanel" aria-labelledby="pills-seguidores-tab" tabindex="0">
-                    <?php while($profile = mysqli_fetch_assoc($seguidores)) :?>
+                <div class="tab-pane fade show active h-100  w-100" id="pills-seguidores" role="tabpanel" aria-labelledby="pills-seguidores-tab" tabindex="0">
+                    <?php foreach($profileUser->getFollowersId() as $followerId) :?>
+                        <?php
+                            $follower = selectUserById($pdo, $followerId);
+                        ?>
                         <div class="tweet p-3 w-100">
                             <div class="d-flex flex-row">
-                                <a class="me-2" href="../controller/ProfileController.php?id=<?= $profile['seguidor'] ?>">
+                                <a class="me-2" href="../controller/ProfileController.php?id=<?= $follower->getId()?>">
                                     <img class="rounded-circle" height="40px" src="../img/icon-profile.png">
                                 </a>
-                                <a class="tw-name my-0 fw-bold" href="../controller/ProfileController.php?id=<?= $profile['seguidor'] ?>"><?=$profile['username']?></a>
+                                <a class="tw-name my-0 fw-bold" href="../controller/ProfileController.php?id=<?= $follower->getId() ?>"><?=$follower->getUsername()?></a>
                                 <!-- Default dropstart button -->
                                 <div class="btn-group dropstart ms-auto">
                                     <button class="d-flex flex-row align-items-start btn-nav bg-transparent btn-plus dropstart" type="button" data-bs-toggle="dropdown" aria-expanded="false">
@@ -102,21 +67,23 @@ $siguiendo = mysqli_query($connection, $sql4);*/
                                 </div>
                             </div>
                             <div>
-                                <p class="ms-5 mb-2"><?=$profile['description']?></p>
+                                <p class="ms-5 mb-2"><?=$follower->getDescription()?></p>
                             </div>
                         </div>
-                        <hr class="m-0">
-                    <?php endwhile ?>
+                    <?php endforeach ?>
 
                 </div>
-                <div class="tab-pane fade d-flex flex-column align-items-center h-100  w-100" id="pills-siguiendo" role="tabpanel" aria-labelledby="pills-siguiendo-tab" tabindex="0">
-                    <?php while($profile = mysqli_fetch_assoc($siguiendo)) :?>
+                <div class="tab-pane fade h-100  w-100" id="pills-siguiendo" role="tabpanel" aria-labelledby="pills-siguiendo-tab" tabindex="0">
+                    <?php foreach($profileUser->getFollowingId() as $followingId) :?>
+                        <?php
+                            $following = selectUserById($pdo, $followingId)
+                        ?>
                         <div class="tweet p-3 w-100">
                             <div class="d-flex flex-row">
-                                <a class="me-2" href="../controller/ProfileController.php?id=<?= $profile['siguiendo'] ?>">
+                                <a class="me-2" href="../controller/ProfileController.php?id=<?= $following->getId() ?>">
                                     <img class="rounded-circle" height="40px" src="../img/icon-profile.png">
                                 </a>
-                                <a class="tw-name my-0 fw-bold" href="../controller/ProfileController.php?id=<?= $profile['siguiendo'] ?>"><?=$profile['username']?></a>
+                                <a class="tw-name my-0 fw-bold" href="../controller/ProfileController.php?id=<?= $following->getId() ?>"><?=$following->getUsername()?></a>
                                 <!-- Default dropstart button -->
                                 <div class="btn-group dropstart ms-auto">
                                     <button class="d-flex flex-row align-items-start btn-nav bg-transparent btn-plus dropstart" type="button" data-bs-toggle="dropdown" aria-expanded="false">
@@ -128,12 +95,10 @@ $siguiendo = mysqli_query($connection, $sql4);*/
                                 </div>
                             </div>
                             <div>
-                                <p class="ms-5 mb-2"><?=$profile['description']?></p>
+                                <p class="ms-5 mb-2"><?=$following->getDescription()?></p>
                             </div>
-                            
                         </div>
-                        <hr class="m-0">
-                    <?php endwhile ?>
+                    <?php endforeach ?>
                 </div>
             </div>
     </section>
