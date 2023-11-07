@@ -62,7 +62,7 @@ function insertTweet($pdo, $text) {
         $stmt= $pdo->prepare($sql);
         $stmt->execute([0, $user->getId(), $text]);
         $tweet = selectTweetById($pdo, $user->getId());
-        array_push($user->getTweets(), $tweet);
+        array_unshift($user->getTweets(), $tweet);
         $_SESSION['usuario'] = selectUserById($pdo, $user->getId());
         return true;
     }catch (PDOException $e) {

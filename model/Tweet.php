@@ -18,7 +18,7 @@ class Tweet {
         if ($o1->id === $o2->id) {
             return 0;
         }
-        return ($o1->id < $o2->id) ? -1 : 1;
+        return ($o2->getId() - $o1->getId()) ? -1 : 1;
     }
     public function getId(){
         return $this->id;
